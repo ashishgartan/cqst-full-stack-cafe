@@ -1,0 +1,197 @@
+<style>
+  @keyframes bag-bounce {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.25);
+    }
+  }
+  .animate-bounce-short {
+    animation: bag-bounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .glass-nav {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+</style>
+
+<nav
+  class="glass-nav border-b border-gray-100/50 px-6 py-4 flex justify-between items-center sticky top-0 z-[100] shadow-sm"
+>
+  <a href="/" class="flex items-center gap-2 group">
+    <div
+      class="bg-red-700 p-1.5 rounded-lg group-hover:rotate-12 transition-transform duration-300"
+    >
+      <svg
+        class="w-6 h-6 text-white"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+        ></path>
+      </svg>
+    </div>
+    <span class="text-2xl font-black tracking-tighter text-gray-900 uppercase">
+      FullStack<span class="text-red-700">Café</span>
+    </span>
+  </a>
+
+  <div class="flex items-center gap-2 md:gap-8">
+    <div class="hidden md:flex items-center gap-8">
+      <% if (user && user.role == "admin") { %>
+      <a
+        href="/dashboard"
+        class="text-sm font-bold text-gray-500 hover:text-red-700 transition"
+        >Dashboard</a
+      >
+      <% } else { %>
+      <a
+        href="/products"
+        class="text-sm font-bold text-gray-500 hover:text-red-700 transition"
+        >Menu</a
+      >
+      <a
+        href="/orders"
+        class="text-sm font-bold text-gray-500 hover:text-red-700 transition"
+        >My Orders</a
+      >
+      <a
+        href="/support"
+        class="text-sm font-bold text-gray-500 hover:text-red-700 transition"
+        >Support</a
+      >
+      <% } %>
+    </div>
+
+    <div class="flex items-center gap-4 pl-4 md:border-l border-gray-100">
+      <% if (!user || user.role != "admin") { %>
+      <a
+        href="/cart"
+        class="relative p-2.5 bg-gray-50 rounded-2xl hover:bg-red-50 group transition-all duration-300"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6 text-gray-700 group-hover:text-red-700 transition-colors"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+          />
+        </svg>
+        <span
+          id="cart-count"
+          class="absolute -top-1 -right-1 bg-red-700 text-white text-[10px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-sm"
+          >0</span
+        >
+      </a>
+      <% } %> <% if (user) { %>
+      <div class="flex items-center gap-3">
+        <div class="text-right hidden sm:block">
+          <p class="text-xs font-black text-gray-900 leading-none">
+            <%= user.name %>
+          </p>
+          <a
+            href="/logout"
+            class="text-[10px] font-bold text-red-600 uppercase tracking-wider hover:underline"
+            >Logout</a
+          >
+        </div>
+        <div class="relative group">
+          <img
+            src="/uploads/<%= user.avatar %>"
+            alt="Profile"
+            class="w-10 h-10 rounded-2xl border-2 border-white shadow-sm object-cover group-hover:border-red-700 transition-all duration-300"
+            onerror="this.src='https://ui-avatars.com/api/?name=<%= user.name %>&background=ef4444&color=fff'"
+          />
+        </div>
+      </div>
+      <% } else { %>
+      <div class="flex items-center gap-3">
+        <a
+          href="/login"
+          class="text-sm font-bold text-gray-500 hover:text-red-700 transition"
+          >Login</a
+        >
+        <a
+          href="/signup"
+          class="bg-gray-900 text-white px-6 py-2.5 rounded-2xl text-sm font-bold hover:bg-red-700 transition-all shadow-lg active:scale-95"
+          >Join</a
+        >
+      </div>
+      <% } %>
+    </div>
+  </div>
+</nav>
+
+<div
+  id="toast-container"
+  class="fixed top-24 left-1/2 -translate-x-1/2 z-[999] flex flex-col gap-3 w-full max-w-sm px-4"
+></div>
+
+<script>
+  function updateCartBadge() {
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const badge = document.getElementById("cart-count");
+    if (badge) {
+      badge.innerText = totalItems;
+      badge.style.display = totalItems > 0 ? "block" : "none";
+      if (totalItems > 0) {
+        badge.classList.add("animate-bounce-short");
+        setTimeout(() => badge.classList.remove("animate-bounce-short"), 300);
+      }
+    }
+  }
+
+  function showToast(message, type = "success") {
+    const container = document.getElementById("toast-container");
+    const toast = document.createElement("div");
+    const isSuccess = type === "success";
+
+    toast.className = `flex items-center gap-3 p-4 rounded-2xl shadow-2xl border backdrop-blur-md transform transition-all duration-500 translate-y-[-20px] opacity-0 
+      ${
+        isSuccess
+          ? "bg-white/90 border-emerald-100 text-emerald-900"
+          : "bg-white/90 border-rose-100 text-rose-900"
+      }`;
+
+    toast.innerHTML = `
+      <div class="${
+        isSuccess ? "text-emerald-500" : "text-rose-500"
+      } bg-white rounded-xl p-1 shadow-sm">
+        ${
+          isSuccess
+            ? '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>'
+            : '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>'
+        }
+      </div>
+      <p class="text-sm font-black tracking-tight">${message}</p>
+    `;
+
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.replace("translate-y-[-20px]", "translate-y-0");
+      toast.classList.replace("opacity-0", "opacity-100");
+    }, 10);
+    setTimeout(() => {
+      toast.classList.add("opacity-0", "scale-90");
+      setTimeout(() => toast.remove(), 500);
+    }, 3000);
+  }
+
+  document.addEventListener("DOMContentLoaded", updateCartBadge);
+</script>

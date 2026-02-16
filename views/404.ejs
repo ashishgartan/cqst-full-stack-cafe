@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/icons/favicon.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Full Stack Café</title>
+  </head>
+  <body>
+    <%- include('partials/header') %>
+
+    <main
+      class="flex-grow flex items-center justify-center min-h-[70vh] bg-white px-6"
+    >
+      <div class="max-w-lg w-full text-center">
+        <div class="mb-8 flex justify-center">
+          <div class="relative">
+            <span
+              class="text-[12rem] font-black text-gray-50 leading-none select-none"
+              >404</span
+            >
+
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div
+                class="bg-white p-6 rounded-full shadow-2xl transform -rotate-12 border border-gray-100"
+              >
+                <span class="text-7xl">🥣</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-4">
+          This Page is Off the Menu!
+        </h1>
+        <p class="text-gray-500 text-lg mb-10 max-w-sm mx-auto">
+          The recipe you're looking for doesn't exist. It might have been
+          deleted, or the link is simply broken.
+        </p>
+
+        <div
+          class="flex flex-col sm:flex-row items-center justify-center gap-4"
+        >
+          <a
+            href="/dashboard"
+            class="w-full sm:w-auto px-8 py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-2xl shadow-lg shadow-red-100 transition-all active:scale-95"
+          >
+            Back to Dashboard
+          </a>
+          <a
+            href="/menu"
+            class="w-full sm:w-auto px-8 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl transition-all"
+          >
+            View Today's Menu
+          </a>
+        </div>
+
+        <p class="mt-12 text-sm text-gray-400">
+          Think this is a mistake?
+          <a
+            href="/support"
+            class="text-red-500 underline decoration-2 underline-offset-4"
+            >Tell the Chef (Support)</a
+          >
+        </p>
+      </div>
+    </main>
+    <%- include('partials/footer') %>
+  </body>
+</html>

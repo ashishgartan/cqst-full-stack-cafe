@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order History | Your Store</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      /* Smooth fade-in for rows */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .order-row {
+        animation: fadeIn 0.3s ease forwards;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 font-sans antialiased text-gray-900">
+    <%- include('partials/header') %>
+
+    <main class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-6xl mx-auto">
+        <div
+          class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10"
+        >
+          <div>
+            <h1 class="text-4xl font-black tracking-tight text-gray-900">
+              Order History
+            </h1>
+            <p class="mt-2 text-gray-500 font-medium">
+              Manage your recent transactions and track delivery status.
+            </p>
+          </div>
+          <a
+            href="/products"
+            class="inline-flex items-center justify-center bg-red-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-800 transition-all shadow-lg shadow-red-200 active:scale-95"
+          >
+            <span class="mr-2">＋</span> New Order
+          </a>
+        </div>
+
+        <div
+          class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[700px]">
+              <thead class="bg-gray-50/50 border-b border-gray-100">
+                <tr>
+                  <th
+                    class="px-8 py-5 text-xs font-bold uppercase text-gray-400 tracking-widest"
+                  >
+                    Order ID
+                  </th>
+                  <th
+                    class="px-8 py-5 text-xs font-bold uppercase text-gray-400 tracking-widest"
+                  >
+                    Date
+                  </th>
+                  <th
+                    class="px-8 py-5 text-xs font-bold uppercase text-gray-400 tracking-widest"
+                  >
+                    Purchased Items
+                  </th>
+                  <th
+                    class="px-8 py-5 text-xs font-bold uppercase text-gray-400 tracking-widest"
+                  >
+                    Total Amount
+                  </th>
+                  <th
+                    class="px-8 py-5 text-xs font-bold uppercase text-gray-400 tracking-widest text-center"
+                  >
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-50">
+                <% if (orders && orders.length > 0) { %> <%
+                orders.forEach(function(order, index) { %>
+                <tr
+                  class="order-row hover:bg-gray-50/50 transition-colors"
+                  style="animation-delay: <%= index * 0.05 %>s"
+                >
+                  <td class="px-2 py-2">
+                    <div class="flex flex-col">
+                      <span class="text-xs font-bold text-gray-300 mb-1"
+                        >REFERENCE</span
+                      >
+                      <code
+                        class="text-sm font-bold text-red-600 bg-red-50 px-2 py-1 rounded-md w-fit"
+                      >
+                        #<%= order._id.toString().slice(-8).toUpperCase() %>
+                      </code>
+                    </div>
+                  </td>
+
+                  <td class="px-8 py-6 whitespace-nowrap">
+                    <span class="text-sm font-semibold text-gray-600">
+                      <%= order.displayDate %>
+                    </span>
+                  </td>
+
+                  <td class="px-8 py-6">
+                    <div class="space-y-2 max-w-xs">
+                      <% order.items.forEach(function(item) { %> <% if
+                      (item.productId) { %>
+                      <div class="flex items-center text-sm">
+                        <span
+                          class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-700 font-bold rounded-lg text-[10px] mr-3 border border-gray-200"
+                        >
+                          <%= item.quantity %>x
+                        </span>
+                        <span class="font-medium text-gray-700 truncate">
+                          <%= item.productId.name %>
+                        </span>
+                      </div>
+                      <% } else { %>
+                      <div
+                        class="text-xs text-gray-400 italic flex items-center"
+                      >
+                        <span class="mr-2">⚠️</span> Item no longer exists
+                      </div>
+                      <% } %> <% }); %>
+                    </div>
+                  </td>
+
+                  <td class="px-8 py-6 whitespace-nowrap">
+                    <span
+                      class="text-xl font-black text-gray-900 tracking-tight"
+                    >
+                      ₹<%= order.totalAmount.toLocaleString('en-IN') %>
+                    </span>
+                  </td>
+
+                  <td class="px-8 py-6 text-center whitespace-nowrap">
+                    <span
+                      class="inline-block px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xs <%= order.statusClass %>"
+                    >
+                      <%= order.status || 'Pending' %>
+                    </span>
+                  </td>
+                </tr>
+                <% }); %> <% } else { %>
+                <tr>
+                  <td colspan="5" class="px-6 py-32 text-center">
+                    <div class="flex flex-col items-center justify-center">
+                      <div
+                        class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 animate-bounce"
+                      >
+                        <span class="text-5xl">🛍️</span>
+                      </div>
+                      <h3 class="text-2xl font-black text-gray-900">
+                        Your history is clear
+                      </h3>
+                      <p
+                        class="text-gray-500 max-w-xs mx-auto mt-2 font-medium"
+                      >
+                        Looks like you haven't placed any orders yet. Let's find
+                        something you love!
+                      </p>
+                      <a
+                        href="/products"
+                        class="mt-8 px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-all"
+                      >
+                        Start Browsing
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <p class="mt-8 text-center text-sm text-gray-400 font-medium">
+          Having trouble with an order?
+          <a href="/support" class="text-red-600 hover:underline"
+            >Contact Support</a
+          >
+        </p>
+      </div>
+    </main>
+
+    <%- include('partials/footer') %>
+  </body>
+</html>

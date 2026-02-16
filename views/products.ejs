@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/icons/favicon.png" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Menu | Full Stack Café</title>
+    <style>
+      @layer utilities {
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      }
+      .product-card {
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 font-sans text-gray-900 antialiased">
+    <%- include('partials/header') %>
+
+    <header
+      class="relative bg-red-800 py-16 text-center text-white overflow-hidden shadow-inner"
+    >
+      <div
+        class="absolute -top-20 -left-20 w-64 h-64 bg-red-600 rounded-full opacity-20 blur-3xl"
+      ></div>
+      <div
+        class="absolute -bottom-20 -right-20 w-80 h-80 bg-orange-500 rounded-full opacity-10 blur-3xl"
+      ></div>
+
+      <div class="relative z-10 px-4">
+        <span
+          class="inline-block bg-white/20 backdrop-blur-md px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 border border-white/10"
+        >
+          Freshly Prepared
+        </span>
+        <h2 class="text-5xl md:text-7xl font-black tracking-tighter mb-4">
+          Full Stack <span class="text-orange-400">Café</span>
+        </h2>
+        <p class="max-w-md mx-auto text-red-100 text-lg font-medium opacity-90">
+          Gourmet fuel for high-performance developers.
+        </p>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
+      <div
+        class="bg-white p-4 md:p-6 rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 mb-12 flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+      >
+        <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <% ['all', 'Fast Food', 'Drinks', 'Desserts'].forEach(cat => { %>
+          <button
+            data-category="<%= cat %>"
+            class="category-btn whitespace-nowrap px-6 py-2.5 rounded-2xl font-bold text-sm transition-all active:scale-95 <%= cat === 'all' ? 'bg-red-700 text-white shadow-lg shadow-red-200' : 'bg-gray-50 text-gray-600 hover:bg-gray-100' %>"
+          >
+            <%= cat === 'all' ? 'All Items' : cat %>
+          </button>
+          <% }) %>
+        </div>
+
+        <div class="relative w-full lg:w-96 group">
+          <span
+            class="absolute inset-y-0 left-4 flex items-center pointer-events-none group-focus-within:text-red-600 transition-colors"
+          >
+            <svg
+              class="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              ></path>
+            </svg>
+          </span>
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search by name or ingredients..."
+            class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 focus:outline-none focus:bg-white transition-all text-sm font-medium"
+          />
+        </div>
+      </div>
+
+      <div
+        id="product-grid"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 min-h-[400px]"
+      ></div>
+
+      <div
+        id="pagination-controls"
+        class="flex justify-center items-center gap-3 mt-16 mb-20"
+      ></div>
+    </main>
+
+    <div
+      id="product-modal"
+      class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md transition-all duration-300"
+    >
+      <div
+        class="bg-white w-full max-w-3xl rounded-[2.5rem] overflow-hidden shadow-2xl transform transition-all border border-white/20"
+      >
+        <div class="relative flex flex-col md:flex-row">
+          <button
+            onclick="closeModal()"
+            class="absolute top-6 right-6 z-20 bg-white/90 backdrop-blur rounded-full p-2 hover:bg-red-50 hover:text-red-700 transition-colors shadow-sm"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+
+          <div class="md:w-1/2">
+            <img
+              id="modal-img"
+              src=""
+              class="w-full h-full object-cover min-h-[300px]"
+            />
+          </div>
+
+          <div class="p-10 md:w-1/2 flex flex-col justify-center">
+            <span
+              id="modal-category"
+              class="text-[10px] font-black uppercase tracking-[0.2em] text-red-700 bg-red-50 px-4 py-1.5 rounded-full w-fit"
+              >Category</span
+            >
+            <h2
+              id="modal-name"
+              class="text-4xl font-black text-gray-900 mt-6 leading-tight"
+            >
+              Name
+            </h2>
+            <p
+              id="modal-desc"
+              class="text-gray-500 mt-6 leading-relaxed font-medium"
+            >
+              Description
+            </p>
+
+            <div
+              class="mt-10 flex items-center justify-between bg-gray-50 p-4 rounded-3xl"
+            >
+              <span
+                id="modal-price"
+                class="text-3xl font-black text-gray-900 leading-none tracking-tighter"
+                >₹0</span
+              >
+              <button
+                id="modal-add-btn"
+                class="bg-red-700 text-white px-8 py-4 rounded-2xl font-bold hover:bg-red-800 transition-all shadow-xl shadow-red-200 active:scale-95"
+              >
+                Add to Bag
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/footer') %>
+
+    <script>
+      /**
+       * GLOBAL STATE
+       */
+      const state = {
+        category: "all",
+        page: 1,
+        search: "",
+        isLoading: false,
+      };
+
+      /**
+       * RENDER FUNCTIONS
+       */
+      function renderProducts(products) {
+        const grid = document.getElementById("product-grid");
+
+        if (!products || products.length === 0) {
+          grid.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-700">
+                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                            <span class="text-5xl">🥙</span>
+                        </div>
+                        <h3 class="text-2xl font-black text-gray-900">Dish not found</h3>
+                        <p class="text-gray-500 mt-2 font-medium">No results for "${state.search}". Try another keyword.</p>
+                        <button onclick="resetAll()" class="mt-8 px-6 py-2 border-2 border-gray-200 rounded-xl font-bold hover:bg-gray-900 hover:text-white transition-all">Show All Menu</button>
+                    </div>`;
+          return;
+        }
+
+        grid.innerHTML = products
+          .map((product) => {
+            const safeName = product.name.replace(/'/g, "\\'");
+            const safeDesc = product.description.replace(/'/g, "\\'");
+
+            return `
+                <div class="product-card group bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl hover:border-red-100">
+                    <div class="relative aspect-[4/3] overflow-hidden cursor-pointer" 
+                         onclick="openModal('${product._id}', '${safeName}', ${product.price}, '${product.image}', '${safeDesc}', '${product.category}')">
+                        <img src="/images/${product.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                             onerror="this.src='https://placehold.co/400x300?text=Food'"/>
+                        <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-4 py-1.5 rounded-2xl text-sm font-black text-red-700 shadow-sm">
+                            ₹${product.price}
+                        </div>
+                    </div>
+                    <div class="p-7">
+                        <h3 class="text-xl font-black text-gray-800 mb-2 truncate">${product.name}</h3>
+                        <p class="text-gray-400 text-sm font-medium mb-6 line-clamp-1">${product.description}</p>
+                        <button 
+                            onclick="addToCart('${product._id}', '${safeName}', ${product.price}, '${product.image}')"
+                            class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-red-700 transition-all duration-300 shadow-lg hover:shadow-red-200 flex items-center justify-center gap-2 group/btn"
+                        >
+                            <span>Add to Bag</span>
+                            <svg class="w-4 h-4 transform group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </button>
+                    </div>
+                </div>`;
+          })
+          .join("");
+      }
+
+      function renderPagination(totalPages, activePage) {
+        const container = document.getElementById("pagination-controls");
+        container.innerHTML = "";
+        if (totalPages <= 1) return;
+
+        for (let i = 1; i <= totalPages; i++) {
+          const isActive = i === activePage;
+          container.innerHTML += `
+                    <button onclick="changePage(${i})" 
+                            class="w-12 h-12 rounded-2xl font-black transition-all duration-300 border-2 
+                            ${
+                              isActive
+                                ? "bg-red-700 border-red-700 text-white shadow-xl shadow-red-200 scale-110"
+                                : "bg-white border-gray-100 text-gray-400 hover:border-red-200 hover:text-red-700"
+                            }">
+                        ${i}
+                    </button>`;
+        }
+      }
+
+      /**
+       * LOGIC CONTROLLERS
+       */
+      async function fetchMenu() {
+        const grid = document.getElementById("product-grid");
+        grid.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-20">
+                    <div class="w-12 h-12 border-4 border-gray-200 border-t-red-700 rounded-full animate-spin"></div>
+                    <p class="mt-4 text-gray-400 font-bold uppercase tracking-widest text-xs">Loading Menu...</p>
+                </div>`;
+
+        try {
+          const params = new URLSearchParams({
+            category: state.category,
+            page: state.page,
+            limit: 8,
+            search: state.search,
+          });
+
+          const response = await fetch(`/api/products?${params}`);
+          const data = await response.json();
+
+          renderProducts(data.products);
+          renderPagination(data.totalPages, data.currentPage);
+        } catch (err) {
+          grid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500 font-bold">Failed to load menu. Please try again.</div>`;
+        }
+      }
+
+      function changePage(page) {
+        state.page = page;
+        window.scrollTo({ top: 400, behavior: "smooth" });
+        fetchMenu();
+      }
+
+      function resetAll() {
+        state.search = "";
+        state.category = "all";
+        document.getElementById("search-input").value = "";
+        document.querySelectorAll(".category-btn").forEach((b) => {
+          b.classList.replace("bg-red-700", "bg-gray-50");
+          b.classList.replace("text-white", "text-gray-600");
+        });
+        document
+          .querySelector('[data-category="all"]')
+          .classList.add("bg-red-700", "text-white");
+        fetchMenu();
+      }
+
+      // --- Event Listeners ---
+
+      // Search (Debounced)
+      let timer;
+      document.getElementById("search-input").addEventListener("input", (e) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          state.search = e.target.value;
+          state.page = 1;
+          fetchMenu();
+        }, 400);
+      });
+
+      // Category Buttons
+      document.querySelectorAll(".category-btn").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          document.querySelectorAll(".category-btn").forEach((b) => {
+            b.classList.remove(
+              "bg-red-700",
+              "text-white",
+              "shadow-lg",
+              "shadow-red-200"
+            );
+            b.classList.add("bg-gray-50", "text-gray-600");
+          });
+          btn.classList.add(
+            "bg-red-700",
+            "text-white",
+            "shadow-lg",
+            "shadow-red-200"
+          );
+          btn.classList.remove("bg-gray-50", "text-gray-600");
+
+          state.category = btn.getAttribute("data-category");
+          state.page = 1;
+          fetchMenu();
+        });
+      });
+
+      // Initial Load
+      document.addEventListener("DOMContentLoaded", fetchMenu);
+
+      /**
+       * MODAL FUNCTIONS
+       */
+      function openModal(id, name, price, img, desc, category) {
+        document.getElementById("modal-img").src = `/images/${img}`;
+        document.getElementById("modal-name").innerText = name;
+        document.getElementById("modal-desc").innerText = desc;
+        document.getElementById("modal-price").innerText = `₹${price}`;
+        document.getElementById("modal-category").innerText = category;
+
+        const addBtn = document.getElementById("modal-add-btn");
+        addBtn.onclick = () => {
+          addToCart(id, name, price, img);
+          closeModal();
+        };
+
+        const modal = document.getElementById("product-modal");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeModal() {
+        const modal = document.getElementById("product-modal");
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        document.body.style.overflow = "auto";
+      }
+    </script>
+  </body>
+</html>
