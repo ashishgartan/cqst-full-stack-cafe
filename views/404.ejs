@@ -5,67 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/icons/favicon.png" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>Full Stack Café</title>
+    <title>404 | FullStack Café</title>
+    <style>
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(-12deg);
+        }
+        50% {
+          transform: translateY(-15px) rotate(-8deg);
+        }
+      }
+      .animate-float {
+        animation: float 4s ease-in-out infinite;
+      }
+    </style>
   </head>
-  <body>
+  <body class="flex flex-col min-h-screen bg-white">
     <%- include('partials/header') %>
 
-    <main
-      class="flex-grow flex items-center justify-center min-h-[70vh] bg-white px-6"
-    >
+    <main class="flex-grow flex items-center justify-center py-12 px-6">
       <div class="max-w-lg w-full text-center">
-        <div class="mb-8 flex justify-center">
+        <div class="mb-6 md:mb-8 flex justify-center">
           <div class="relative">
             <span
-              class="text-[12rem] font-black text-gray-50 leading-none select-none"
-              >404</span
+              class="text-8xl md:text-[12rem] font-black text-gray-50 leading-none select-none tracking-tighter"
             >
+              404
+            </span>
 
             <div class="absolute inset-0 flex items-center justify-center">
               <div
-                class="bg-white p-6 rounded-full shadow-2xl transform -rotate-12 border border-gray-100"
+                class="bg-white p-5 md:p-6 rounded-[2rem] shadow-2xl border border-gray-100 animate-float"
               >
-                <span class="text-7xl">🥣</span>
+                <span class="text-5xl md:text-7xl">🥣</span>
               </div>
             </div>
           </div>
         </div>
 
-        <h1 class="text-3xl font-extrabold text-gray-900 mb-4">
-          This Page is Off the Menu!
+        <h1
+          class="text-2xl md:text-3xl font-black text-gray-900 mb-4 uppercase tracking-tighter"
+        >
+          This Page is <span class="text-red-700">Off the Menu!</span>
         </h1>
-        <p class="text-gray-500 text-lg mb-10 max-w-sm mx-auto">
+        <p
+          class="text-gray-500 text-base md:text-lg mb-10 max-w-xs md:max-w-sm mx-auto font-medium"
+        >
           The recipe you're looking for doesn't exist. It might have been
           deleted, or the link is simply broken.
         </p>
 
         <div
-          class="flex flex-col sm:flex-row items-center justify-center gap-4"
+          class="flex flex-col sm:flex-row items-center justify-center gap-3"
         >
           <a
             href="/dashboard"
-            class="w-full sm:w-auto px-8 py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-2xl shadow-lg shadow-red-100 transition-all active:scale-95"
+            class="w-full sm:w-auto px-10 py-4 bg-gray-900 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-gray-200 transition-all active:scale-95"
           >
-            Back to Dashboard
+            Go To Dashboard
           </a>
           <a
-            href="/menu"
-            class="w-full sm:w-auto px-8 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl transition-all"
+            href="/products"
+            class="w-full sm:w-auto px-10 py-4 bg-gray-100 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl transition-all hover:bg-gray-200"
           >
-            View Today's Menu
+            Check the Menu
           </a>
         </div>
 
-        <p class="mt-12 text-sm text-gray-400">
+        <p
+          class="mt-12 text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest"
+        >
           Think this is a mistake?
           <a
             href="/support"
-            class="text-red-500 underline decoration-2 underline-offset-4"
-            >Tell the Chef (Support)</a
+            class="text-red-700 border-b-2 border-red-100 hover:border-red-700 transition-colors ml-1"
           >
+            Tell the Chef (Support)
+          </a>
         </p>
       </div>
     </main>
+
     <%- include('partials/footer') %>
   </body>
 </html>

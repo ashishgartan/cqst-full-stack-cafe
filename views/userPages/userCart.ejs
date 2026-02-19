@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Full Stack Café | Your Bag</title>
+    <style>
+      /* Smooth item removal */
+      .cart-item {
+        transition: all 0.3s ease;
+      }
+      .cart-item.removing {
+        transform: translateX(100px);
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <%- include('../partials/header') %>
+
+    <div class="py-8 md:py-12">
+      <div class="max-w-6xl mx-auto px-4">
+        <h1
+          class="text-3xl md:text-4xl font-black text-gray-900 mb-8 tracking-tight"
+        >
+          Your Bag
+        </h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div class="lg:col-span-2 space-y-4" id="cart-items-container">
+            <div
+              class="bg-white p-12 rounded-[2rem] text-center border border-dashed border-gray-200"
+            >
+              <p
+                class="text-gray-400 font-bold animate-pulse uppercase tracking-widest text-xs"
+              >
+                Checking your bag...
+              </p>
+            </div>
+          </div>
+
+          <div class="lg:col-span-1">
+            <div
+              class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 sticky top-24"
+            >
+              <h2
+                class="text-xl font-black mb-6 text-gray-800 uppercase tracking-tighter"
+              >
+                Order Summary
+              </h2>
+
+              <div class="space-y-4 mb-8">
+                <div
+                  class="flex justify-between text-gray-500 font-bold text-sm uppercase tracking-tight"
+                >
+                  <span>Subtotal</span>
+                  <span id="subtotal" class="text-gray-800">₹0</span>
+                </div>
+                <div
+                  class="flex justify-between text-gray-500 font-bold text-sm uppercase tracking-tight"
+                >
+                  <span>Platform Fee</span>
+                  <span class="text-gray-800">₹5</span>
+                </div>
+                <div
+                  class="border-t border-gray-100 pt-4 flex justify-between items-end"
+                >
+                  <span
+                    class="text-gray-400 font-black uppercase text-[10px] tracking-widest pb-1"
+                    >Grand Total</span
+                  >
+                  <span
+                    id="total-amount"
+                    class="text-3xl font-black text-red-700 leading-none"
+                    >₹0</span
+                  >
+                </div>
+              </div>
+
+              <button
+                onclick="placeOrder()"
+                class="w-full bg-red-700 text-white py-5 rounded-2xl font-black hover:bg-red-800 transition shadow-xl shadow-red-100 flex items-center justify-center gap-3 active:scale-[0.98]"
+              >
+                Confirm Order
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </button>
+
+              <p
+                class="text-center text-[10px] text-gray-400 font-bold mt-4 uppercase tracking-widest"
+              >
+                Secure Checkout Enabled
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function renderCart() {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        const container = document.getElementById("cart-items-container");
+
+        if (cart.length === 0) {
+          container.innerHTML = `
+            <div class="bg-white p-12 md:p-20 rounded-[2.5rem] text-center border border-dashed border-gray-200">
+              <div class="text-6xl mb-6">🥡</div>
+              <h3 class="text-xl font-black text-gray-800 mb-2 uppercase">Your bag is empty</h3>
+              <p class="text-gray-400 mb-8 font-medium">Looks like you haven't added anything to your bag yet.</p>
+              <a href="/products" class="inline-block bg-gray-900 text-white px-10 py-4 rounded-2xl font-black hover:bg-red-700 transition shadow-lg active:scale-95 text-sm uppercase">
+                Browse Menu
+              </a>
+            </div>`;
+          document.getElementById("subtotal").innerText = "₹0";
+          document.getElementById("total-amount").innerText = "₹0";
+          return;
+        }
+
+        let html = "";
+        let subtotal = 0;
+
+        cart.forEach((item) => {
+          subtotal += item.price * item.quantity;
+          html += `
+            <div class="cart-item bg-white p-4 md:p-6 rounded-[2rem] flex items-center gap-4 md:gap-6 border border-gray-50 shadow-sm">
+              <img src="/images/${item.image}" 
+                   class="w-20 h-20 md:w-24 md:h-24 rounded-2xl object-cover shadow-inner" 
+                   onerror="this.src='https://placehold.co/100x100?text=Food'">
+              
+              <div class="flex-1 min-w-0">
+                <h3 class="font-black text-base md:text-lg text-gray-800 truncate leading-tight">${
+                  item.name
+                }</h3>
+                <p class="text-red-700 font-black text-sm">₹${item.price}</p>
+                
+                <div class="flex md:hidden items-center gap-3 mt-2">
+                   <button onclick="updateQty('${
+                     item.id
+                   }', -1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg font-bold">-</button>
+                   <span class="font-black text-sm">${item.quantity}</span>
+                   <button onclick="updateQty('${
+                     item.id
+                   }', 1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg font-bold">+</button>
+                </div>
+              </div>
+
+              <div class="hidden md:flex items-center gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-100">
+                <button onclick="updateQty('${
+                  item.id
+                }', -1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black hover:bg-red-700 hover:text-white transition-all">-</button>
+                <span class="font-black w-6 text-center text-gray-800">${
+                  item.quantity
+                }</span>
+                <button onclick="updateQty('${
+                  item.id
+                }', 1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black hover:bg-red-700 hover:text-white transition-all">+</button>
+              </div>
+
+              <div class="text-right">
+                <p class="font-black text-gray-900 text-sm md:text-lg">₹${
+                  item.price * item.quantity
+                }</p>
+                <button onclick="updateQty('${item.id}', -${
+            item.quantity
+          })" class="text-[10px] font-black text-gray-300 hover:text-red-700 uppercase tracking-widest mt-1">Remove</button>
+              </div>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+        document.getElementById("subtotal").innerText = "₹" + subtotal;
+        document.getElementById("total-amount").innerText =
+          "₹" + (subtotal + 5);
+      }
+
+      function updateQty(productId, change) {
+        let cart = JSON.parse(localStorage.getItem("cart")) || [];
+        const itemIndex = cart.findIndex((item) => item.id === productId);
+
+        if (itemIndex > -1) {
+          cart[itemIndex].quantity += change;
+          if (cart[itemIndex].quantity <= 0) {
+            cart.splice(itemIndex, 1);
+          }
+          localStorage.setItem("cart", JSON.stringify(cart));
+          renderCart();
+          if (typeof updateCartBadge === "function") updateCartBadge();
+        }
+      }
+
+      async function placeOrder() {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        if (cart.length === 0) {
+          showToast("Your bag is empty!", "error");
+          return;
+        }
+
+        const orderData = {
+          items: cart.map((item) => ({ id: item.id, quantity: item.quantity })),
+        };
+
+        try {
+          const response = await fetch("/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderData),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            localStorage.removeItem("cart");
+            if (typeof updateCartBadge === "function") updateCartBadge();
+            showToast(data.message || "Order placed successfully!", "success");
+            setTimeout(() => {
+              window.location.href = "/orders";
+            }, 1500);
+          } else {
+            if (response.status === 401) {
+              showToast("Please login to checkout", "error");
+              setTimeout(() => (window.location.href = "/login"), 1500);
+            } else {
+              showToast(data.error || "Failed to place order", "error");
+            }
+          }
+        } catch (err) {
+          showToast("Network error. Please try again.", "error");
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", renderCart);
+    </script>
+
+    <%- include('../partials/footer') %>
+  </body>
+</html>

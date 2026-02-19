@@ -1,8 +1,7 @@
-const router = require("./orderRoutes");
+const express = require("express");
+const router = express.Router();
+const cartController = require("../controllers/cartController");
 
-// Show the shopping bag page
-router.get("/cart", (req, res) => {
-  res.render("userCart"); // user is already available via res.locals middleware
-});
+router.get("/cart", cartController.getCartPage);
 
 module.exports = router;

@@ -7,45 +7,47 @@ exports.getSignupPage = (req, res) => {
   res.render("signup", { message: null });
 };
 
-// Handle Signup Logic
+// Handle Signup Logic (Refactored for Fetch + JSON)
 exports.postSignup = async (req, res) => {
   try {
-    // 1. Capture 'phone' from req.body
     const { username, password, email, phone } = req.body;
 
-    // 2. Check if user already exists (by username, email, OR phone)
     const existingUser = await User.findOne({
       $or: [{ username }, { email }, { phone }],
     });
 
     if (existingUser) {
-      return res.render("signup", {
-        message: "User, Email, or Phone already in use.",
+      return res.status(400).json({
+        success: false,
+        message: "Username, Email, or Phone already in use.",
       });
     }
 
-    // 3. Hash Password
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 4. Handle Avatar Path
     const avatarPath = req.file
       ? `/${req.file.filename}`
       : "default-avatar.png";
 
-    // 5. Create new user with phone number
     const newUser = new User({
       username,
       email,
-      phone, // Added phone
+      phone,
       password: hashedPassword,
       avatar: avatarPath,
-      role: "user", // Explicitly setting default role
+      role: "user",
     });
 
     await newUser.save();
-    res.redirect("/login");
+
+    // Return JSON instead of redirect
+    res.status(201).json({
+      success: true,
+      message: "Account created successfully! Redirecting to login...",
+    });
   } catch (err) {
-    res.status(500).send("Error during signup: " + err.message);
+    res
+      .status(500)
+      .json({ success: false, message: "Signup error: " + err.message });
   }
 };
 
@@ -54,17 +56,30 @@ exports.getLoginPage = (req, res) => {
   res.render("login");
 };
 
-// Handle Login Logic
+// Handle Login Logic (Refactored for Fetch + JWT + JSON)
 exports.postLogin = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, subscription } = req.body;
+
+    // 1. Find user first
     const user = await User.findOne({ username });
 
+    // 2. Validate user existence AND password before doing anything else
+    // We use a single check to prevent "Username Enumeration" (letting attackers know which users exist)
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).send("Invalid credentials");
+      return res.status(401).json({
+        success: false,
+        message: "Invalid username or password",
+      });
     }
 
-    // 6. Security Improvement: Sign specific payload fields, NOT the whole user object
+    // 3. Logic for Push Subscription (Now safe because user definitely exists)
+    if (subscription) {
+      user.pushSubscription = subscription;
+      await user.save();
+    }
+
+    // 4. Create JWT Payload
     const payload = {
       id: user._id,
       name: user.username,
@@ -72,28 +87,58 @@ exports.postLogin = async (req, res) => {
       avatar: user.avatar,
     };
 
+    // 5. Sign Token
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
 
-    // Set token in Cookie
+    // 6. Set Cookie
     res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Better security for live sites
+      httpOnly: true, // Prevents XSS attacks
+      secure: process.env.NODE_ENV === "production", // Only send over HTTPS in prod
+      sameSite: "lax", // Protects against CSRF
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
-    if (payload.role == "admin") {
-      res.redirect("/dashboard");
-    } else if (payload.role == "user") {
-      res.redirect("/products");
-    }
+
+    // 7. Determine Redirect URL based on role
+    const redirectUrl = user.role === "admin" ? "/admin/orders" : "/products";
+
+    // 8. Final Response
+    return res.json({
+      success: true,
+      message: "Login successful",
+      redirectUrl,
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Login error");
+    console.error("Login Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "An internal server error occurred",
+    });
   }
 };
-
 // Handle Logout
-exports.logout = (req, res) => {
-  res.clearCookie("token");
-  res.redirect("/login");
+exports.logout = async (req, res) => {
+  try {
+    // 1. If user is logged in, nullify the push subscription
+    if (req.user && req.user._id) {
+      const User = require("../models/User");
+      await User.findByIdAndUpdate(req.user._id, {
+        $set: { pushSubscription: null }, // Explicitly setting to null
+      });
+    }
+
+    // 2. Clear the authentication cookie
+    res.clearCookie("token");
+
+    // 3. Handle response (JSON for Fetch or Redirect for standard links)
+    if (req.xhr || req.headers.accept.indexOf("json") > -1) {
+      return res.json({ success: true, redirectUrl: "/login" });
+    }
+
+    res.redirect("/login");
+  } catch (err) {
+    console.error("Logout Error:", err);
+    res.redirect("/login");
+  }
 };

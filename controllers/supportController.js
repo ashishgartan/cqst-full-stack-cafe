@@ -8,9 +8,6 @@ exports.submitSupportRequest = async (req, res) => {
       return res.status(400).send("Please fill in all required fields.");
     }
 
-    // 2. Logic: You could save this to a 'Support' Collection or send an Email
-    console.log(`Support Request from ${name}:`, { orderId, subject, message });
-
     // 3. Response
     res.status(200).send(`
             <script>

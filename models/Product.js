@@ -10,6 +10,10 @@ const productSchema = new mongoose.Schema(
       enum: ["Fast Food", "Drinks", "Desserts"],
     },
     description: String,
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
     image: String,
   },
   { timestamps: true }

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/icons/favicon.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Full Stack Café</title>
+    <style>
+      /* Smooth modal transition */
+      .modal-animate {
+        transition: all 0.3s ease-out;
+      }
+
+      /* Mobile optimization for touch targets */
+      @media (max-width: 640px) {
+        input,
+        select,
+        textarea {
+          font-size: 16px !important; /* Prevents auto-zoom on iOS focus */
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 min-h-screen font-sans antialiased">
+    <%- include('../partials/header') %>
+
+    <div class="bg-gray-100 min-h-screen p-4 md:p-8">
+      <div class="max-w-7xl mx-auto">
+        <div
+          class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8"
+        >
+          <div>
+            <h1
+              class="text-3xl md:text-4xl font-black text-gray-800 tracking-tight"
+            >
+              Menu Vault
+            </h1>
+            <p class="text-gray-500 font-medium mt-1">
+              Manage dishes and physical image uploads.
+            </p>
+          </div>
+          <button
+            onclick="openModal()"
+            class="w-full md:w-auto bg-red-700 text-white px-8 py-4 rounded-2xl font-black text-sm shadow-xl shadow-red-200 hover:bg-red-800 transition-all active:scale-95"
+          >
+            + Add New Dish
+          </button>
+        </div>
+
+        <div
+          class="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden"
+        >
+          <div class="hidden md:block overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead
+                class="bg-gray-50 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-100"
+              >
+                <tr>
+                  <th class="px-8 py-6">Dish Info</th>
+                  <th class="px-8 py-6">Status</th>
+                  <th class="px-8 py-6">Price</th>
+                  <th class="px-8 py-6 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody
+                id="product-tbody-desktop"
+                class="divide-y divide-gray-50"
+              ></tbody>
+            </table>
+          </div>
+
+          <div
+            id="product-list-mobile"
+            class="md:hidden divide-y divide-gray-100"
+          ></div>
+
+          <div
+            id="pagination-footer"
+            class="px-6 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4"
+          >
+            <p
+              id="pagination-info"
+              class="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest"
+            ></p>
+            <div
+              id="pagination-controls"
+              class="flex flex-wrap justify-center gap-2"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="product-modal"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden flex items-end md:items-center justify-center p-0 md:p-4"
+    >
+      <div
+        class="bg-white rounded-t-[2.5rem] md:rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-10 md:zoom-in duration-300 max-h-[90vh] flex flex-col"
+      >
+        <div
+          class="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center shrink-0"
+        >
+          <h2
+            id="modal-title"
+            class="text-xl md:text-2xl font-black text-gray-800"
+          >
+            Edit Dish
+          </h2>
+          <button
+            onclick="closeModal()"
+            class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form
+          id="product-form"
+          class="p-6 md:p-8 space-y-5 overflow-y-auto"
+          enctype="multipart/form-data"
+        >
+          <input type="hidden" id="product-id" />
+
+          <div
+            class="bg-gray-50 p-4 rounded-3xl border-2 border-dashed border-gray-200"
+          >
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+              <div class="relative group shrink-0">
+                <img
+                  id="p-preview"
+                  src="/images/placeholder.png"
+                  class="w-24 h-24 rounded-2xl object-cover bg-white shadow-sm border border-gray-100"
+                />
+              </div>
+              <div class="flex-1 w-full text-center sm:text-left">
+                <label
+                  class="block text-[10px] font-black uppercase text-gray-400 mb-2"
+                  >Visual ID</label
+                >
+                <input
+                  type="file"
+                  id="p-image-input"
+                  name="image"
+                  accept="image/*"
+                  onchange="previewImage(this)"
+                  class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-red-700 file:text-white hover:file:bg-red-800 cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label
+              class="block text-[10px] font-black uppercase text-gray-400 mb-2"
+              >Dish Name</label
+            >
+            <input
+              type="text"
+              id="p-name"
+              name="name"
+              placeholder="e.g. Classic Burger"
+              class="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold focus:ring-2 focus:ring-red-500"
+              required
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label
+                class="block text-[10px] font-black uppercase text-gray-400 mb-2"
+                >Price (₹)</label
+              >
+              <input
+                type="number"
+                id="p-price"
+                name="price"
+                placeholder="0.00"
+                class="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold focus:ring-2 focus:ring-red-500"
+                required
+              />
+            </div>
+            <div>
+              <label
+                class="block text-[10px] font-black uppercase text-gray-400 mb-2"
+                >Category</label
+              >
+              <select
+                id="p-category"
+                name="category"
+                class="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold focus:ring-2 focus:ring-red-500 appearance-none"
+              >
+                <option value="Fast Food">Fast Food</option>
+                <option value="Drinks">Drinks</option>
+                <option value="Desserts">Desserts</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              class="block text-[10px] font-black uppercase text-gray-400 mb-2"
+              >Description</label
+            >
+            <textarea
+              id="p-description"
+              name="description"
+              rows="3"
+              placeholder="Tell us about this dish..."
+              class="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold focus:ring-2 focus:ring-red-500 resize-none"
+            ></textarea>
+          </div>
+
+          <button
+            type="submit"
+            class="w-full bg-red-700 text-white py-4 md:py-5 rounded-2xl font-black shadow-lg shadow-red-200 hover:bg-red-800 transition-all active:scale-95 mb-4"
+          >
+            Save Dish Details
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      let state = { page: 1, limit: 8, products: [] };
+
+      function previewImage(input) {
+        if (input.files && input.files[0]) {
+          const reader = new FileReader();
+          reader.onload = (e) =>
+            (document.getElementById("p-preview").src = e.target.result);
+          reader.readAsDataURL(input.files[0]);
+        }
+      }
+
+      async function loadProducts() {
+        try {
+          const res = await fetch(
+            `/api/admin/products?page=${state.page}&limit=${state.limit}`
+          );
+          const data = await res.json();
+          state.products = data.products;
+          renderUI(data.products);
+          renderPagination(data.totalPages, data.currentPage);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      function renderUI(products) {
+        const tbody = document.getElementById("product-tbody-desktop");
+        const mobileList = document.getElementById("product-list-mobile");
+
+        // Generate Desktop Table Body
+        tbody.innerHTML = products
+          .map(
+            (p) => `
+          <tr class="hover:bg-gray-50/50 transition-colors ${
+            !p.isActive ? "opacity-50 grayscale" : ""
+          }">
+            <td class="px-8 py-5 flex items-center gap-4">
+                <img src="/images/${
+                  p.image
+                }" class="w-14 h-14 rounded-2xl object-cover shadow-sm border border-gray-100" />
+                <div>
+                    <p class="font-black text-gray-800">${p.name}</p>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase truncate max-w-[150px]">${
+                      p.description || ""
+                    }</p>
+                </div>
+            </td>
+            <td class="px-8 py-5">
+              <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase ${
+                p.isActive
+                  ? "bg-green-100 text-green-700"
+                  : "bg-gray-200 text-gray-600"
+              }">
+                ${p.isActive ? "Active" : "Inactive"}
+              </span>
+            </td>
+            <td class="px-8 py-5 font-black text-red-700">₹${p.price}</td>
+            <td class="px-8 py-5 text-center">
+              <div class="flex justify-center gap-2">
+                <button onclick="openModal('${
+                  p._id
+                }')" class="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2.828 2.828 0 114 4L11.828 15H9v-2.828l8.586-8.586z" stroke-width="2"/></svg>
+                </button>
+                <button onclick="toggleStatus('${p._id}', ${
+              p.isActive
+            })" class="p-3 ${
+              p.isActive
+                ? "bg-red-50 text-red-600"
+                : "bg-green-50 text-green-600"
+            } rounded-xl transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `
+          )
+          .join("");
+
+        // Generate Mobile Card List
+        mobileList.innerHTML = products
+          .map(
+            (p) => `
+          <div class="p-6 flex items-center justify-between gap-4 ${
+            !p.isActive ? "opacity-50 grayscale" : ""
+          }">
+            <div class="flex items-center gap-4 overflow-hidden">
+                <img src="/images/${
+                  p.image
+                }" class="w-16 h-16 rounded-2xl object-cover shrink-0 border border-gray-100" />
+                <div class="overflow-hidden">
+                    <p class="font-black text-gray-800 text-lg truncate">${
+                      p.name
+                    }</p>
+                    <p class="text-[10px] text-red-700 font-black uppercase tracking-widest mb-1">₹${
+                      p.price
+                    }</p>
+                    <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                      p.isActive
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-200 text-gray-600"
+                    }">
+                      ${p.isActive ? "Active" : "Inactive"}
+                    </span>
+                </div>
+            </div>
+            <div class="flex flex-col gap-2">
+                <button onclick="openModal('${
+                  p._id
+                }')" class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2.828 2.828 0 114 4L11.828 15H9v-2.828l8.586-8.586z" stroke-width="2"/></svg>
+                </button>
+                <button onclick="toggleStatus('${p._id}', ${
+              p.isActive
+            })" class="p-3 ${
+              p.isActive
+                ? "bg-red-50 text-red-600"
+                : "bg-green-50 text-green-600"
+            } rounded-xl">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2"/></svg>
+                </button>
+            </div>
+          </div>
+        `
+          )
+          .join("");
+      }
+
+      function openModal(id = null) {
+        const modal = document.getElementById("product-modal");
+        const form = document.getElementById("product-form");
+        const preview = document.getElementById("p-preview");
+        modal.classList.remove("hidden");
+        document.body.style.overflow = "hidden"; // Prevent background scroll
+
+        if (id) {
+          const p = state.products.find((x) => x._id === id);
+          document.getElementById("modal-title").innerText = "Edit Dish";
+          document.getElementById("product-id").value = p._id;
+          document.getElementById("p-name").value = p.name;
+          document.getElementById("p-price").value = p.price;
+          document.getElementById("p-category").value = p.category;
+          document.getElementById("p-description").value = p.description || "";
+          preview.src = "/images/" + p.image;
+        } else {
+          form.reset();
+          preview.src = "/images/placeholder.png";
+          document.getElementById("product-id").value = "";
+          document.getElementById("modal-title").innerText = "Add New Dish";
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("product-modal").classList.add("hidden");
+        document.body.style.overflow = "auto";
+      }
+
+      document.getElementById("product-form").onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById("product-id").value;
+        const formData = new FormData(e.target);
+
+        const url = id
+          ? `/api/admin/products/edit/${id}`
+          : `/api/admin/products/add`;
+        const res = await fetch(url, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (res.ok) {
+          closeModal();
+          loadProducts();
+        }
+      };
+
+      async function toggleStatus(id, currentStatus) {
+        const res = await fetch(`/api/admin/products/toggle-status/${id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isActive: !currentStatus }),
+        });
+        if (res.ok) loadProducts();
+      }
+
+      function renderPagination(total, current) {
+        const controls = document.getElementById("pagination-controls");
+        document.getElementById(
+          "pagination-info"
+        ).innerText = `Page ${current} of ${total}`;
+        controls.innerHTML = "";
+        for (let i = 1; i <= total; i++) {
+          controls.innerHTML += `<button onclick="state.page=${i};loadProducts();window.scrollTo({top:0,behavior:'smooth'})" class="w-10 h-10 rounded-xl font-black text-[10px] ${
+            i === current
+              ? "bg-gray-900 text-white shadow-lg"
+              : "bg-white text-gray-400 border border-gray-100"
+          }">${i}</button>`;
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", loadProducts);
+    </script>
+    <%- include('../partials/footer') %>
+  </body>
+</html>

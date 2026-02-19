@@ -13,21 +13,38 @@
   }
 
   .glass-nav {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  /* Hide scrollbar for mobile nav */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 </style>
 
+<link rel="manifest" href="/manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta
+  name="apple-mobile-web-app-status-bar-style"
+  content="black-translucent"
+/>
+<meta name="theme-color" content="#b91c1c" />
+
 <nav
-  class="glass-nav border-b border-gray-100/50 px-6 py-4 flex justify-between items-center sticky top-0 z-[100] shadow-sm"
+  class="glass-nav border-b border-gray-100/50 px-4 md:px-6 py-3 md:py-4 flex justify-between items-center sticky top-0 z-[100] shadow-sm"
 >
   <a href="/" class="flex items-center gap-2 group">
     <div
-      class="bg-red-700 p-1.5 rounded-lg group-hover:rotate-12 transition-transform duration-300"
+      class="bg-red-700 p-1.5 rounded-xl group-hover:rotate-12 transition-transform duration-300"
     >
       <svg
-        class="w-6 h-6 text-white"
+        class="w-5 h-5 md:w-6 md:h-6 text-white"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -40,106 +57,218 @@
         ></path>
       </svg>
     </div>
-    <span class="text-2xl font-black tracking-tighter text-gray-900 uppercase">
+    <span
+      class="text-xl md:text-2xl font-black tracking-tighter text-gray-900 uppercase"
+    >
       FullStack<span class="text-red-700">Café</span>
     </span>
   </a>
 
-  <div class="flex items-center gap-2 md:gap-8">
-    <div class="hidden md:flex items-center gap-8">
-      <% if (user && user.role == "admin") { %>
-      <a
-        href="/dashboard"
-        class="text-sm font-bold text-gray-500 hover:text-red-700 transition"
-        >Dashboard</a
-      >
-      <% } else { %>
-      <a
-        href="/products"
-        class="text-sm font-bold text-gray-500 hover:text-red-700 transition"
-        >Menu</a
-      >
-      <a
-        href="/orders"
-        class="text-sm font-bold text-gray-500 hover:text-red-700 transition"
-        >My Orders</a
-      >
-      <a
-        href="/support"
-        class="text-sm font-bold text-gray-500 hover:text-red-700 transition"
-        >Support</a
-      >
-      <% } %>
-    </div>
+  <div class="hidden md:flex items-center gap-8">
+    <% if (user && user.role == "admin") { %>
+    <a
+      href="/admin/orders"
+      class="group flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-red-700 transition-all"
+      >Orders</a
+    >
+    <a
+      href="/admin/users"
+      class="group flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-red-700 transition-all"
+      >Users</a
+    >
+    <a
+      href="/admin/products"
+      class="group flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-red-700 transition-all"
+      >Products</a
+    >
+    <% } else { %>
+    <a
+      href="/products"
+      class="group flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-red-700 transition-all"
+      >Menu</a
+    >
+    <a
+      href="/orders"
+      class="group flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-red-700 transition-all"
+      >My Orders</a
+    >
+    <a
+      href="/support"
+      class="group flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-red-700 transition-all"
+      >Support</a
+    >
+    <% } %>
+  </div>
 
-    <div class="flex items-center gap-4 pl-4 md:border-l border-gray-100">
-      <% if (!user || user.role != "admin") { %>
-      <a
-        href="/cart"
-        class="relative p-2.5 bg-gray-50 rounded-2xl hover:bg-red-50 group transition-all duration-300"
+  <div class="flex items-center gap-2 md:gap-4">
+    <% if (!user || user.role == "user") { %>
+    <a
+      href="/cart"
+      class="relative p-2.5 bg-gray-50 rounded-full hover:bg-red-50 group transition-all duration-300"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 md:h-6 md:w-6 text-gray-700 group-hover:text-red-700"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
       >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+        />
+      </svg>
+      <span
+        id="cart-count"
+        class="absolute -top-1 -right-1 bg-red-700 text-white text-[9px] md:text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-sm"
+        >0</span
+      >
+    </a>
+    <% } %> <% if (user) { %>
+    <div class="flex items-center gap-3">
+      <div class="text-right hidden sm:block">
+        <p class="text-xs font-black text-gray-900 leading-none">
+          <%= user.name %>
+        </p>
+        <a
+          href="/logout"
+          class="text-[10px] font-bold text-red-600 uppercase tracking-wider"
+          >Logout</a
+        >
+      </div>
+      <img
+        src="/avatars/<%= user.avatar %>"
+        class="w-9 h-9 md:w-10 md:h-10 rounded-full border-2 border-white shadow-sm object-cover"
+        onerror="this.src='https://ui-avatars.com/api/?name=<%= user.name %>&background=ef4444&color=fff'"
+      />
+      <a href="/logout" class="md:hidden p-2 text-red-600">
         <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 text-gray-700 group-hover:text-red-700 transition-colors"
+          class="w-5 h-5"
           fill="none"
-          viewBox="0 0 24 24"
           stroke="currentColor"
+          viewBox="0 0 24 24"
         >
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="2"
-            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
           />
         </svg>
-        <span
-          id="cart-count"
-          class="absolute -top-1 -right-1 bg-red-700 text-white text-[10px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-sm"
-          >0</span
-        >
       </a>
-      <% } %> <% if (user) { %>
-      <div class="flex items-center gap-3">
-        <div class="text-right hidden sm:block">
-          <p class="text-xs font-black text-gray-900 leading-none">
-            <%= user.name %>
-          </p>
-          <a
-            href="/logout"
-            class="text-[10px] font-bold text-red-600 uppercase tracking-wider hover:underline"
-            >Logout</a
-          >
-        </div>
-        <div class="relative group">
-          <img
-            src="/uploads/<%= user.avatar %>"
-            alt="Profile"
-            class="w-10 h-10 rounded-2xl border-2 border-white shadow-sm object-cover group-hover:border-red-700 transition-all duration-300"
-            onerror="this.src='https://ui-avatars.com/api/?name=<%= user.name %>&background=ef4444&color=fff'"
-          />
-        </div>
-      </div>
-      <% } else { %>
-      <div class="flex items-center gap-3">
-        <a
-          href="/login"
-          class="text-sm font-bold text-gray-500 hover:text-red-700 transition"
-          >Login</a
-        >
-        <a
-          href="/signup"
-          class="bg-gray-900 text-white px-6 py-2.5 rounded-2xl text-sm font-bold hover:bg-red-700 transition-all shadow-lg active:scale-95"
-          >Join</a
-        >
-      </div>
-      <% } %>
     </div>
+    <% } else { %>
+    <div class="flex items-center gap-2 md:gap-3">
+      <a href="/login" class="text-xs md:text-sm font-bold text-gray-500 px-2"
+        >Login</a
+      >
+      <a
+        href="/signup"
+        class="bg-gray-900 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold shadow-lg"
+        >Join</a
+      >
+    </div>
+    <% } %>
   </div>
 </nav>
 
 <div
+  class="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/90 backdrop-blur-lg border-t border-gray-100 px-6 py-3 flex justify-between items-center shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
+>
+  <% if (user && user.role == "admin") { %>
+  <a
+    href="/admin/orders"
+    class="flex flex-col items-center gap-1 text-gray-400 hover:text-red-700 transition-colors"
+  >
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01m-.01 4h.01"
+      />
+    </svg>
+    <span class="text-[9px] font-bold uppercase tracking-widest">Orders</span>
+  </a>
+  <a
+    href="/admin/users"
+    class="flex flex-col items-center gap-1 text-gray-400 hover:text-red-700 transition-colors"
+  >
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+      />
+    </svg>
+    <span class="text-[9px] font-bold uppercase tracking-widest">Users</span>
+  </a>
+  <a
+    href="/admin/products"
+    class="flex flex-col items-center gap-1 text-gray-400 hover:text-red-700 transition-colors"
+  >
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+      />
+    </svg>
+    <span class="text-[9px] font-bold uppercase tracking-widest">Menu</span>
+  </a>
+  <% } else { %>
+  <a
+    href="/products"
+    class="flex flex-col items-center gap-1 text-gray-400 hover:text-red-700 transition-colors"
+  >
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M4 6h16M4 12h16M4 18h7"
+      />
+    </svg>
+    <span class="text-[9px] font-bold uppercase tracking-widest">Menu</span>
+  </a>
+  <a
+    href="/orders"
+    class="flex flex-col items-center gap-1 text-gray-400 hover:text-red-700 transition-colors"
+  >
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+      />
+    </svg>
+    <span class="text-[9px] font-bold uppercase tracking-widest">History</span>
+  </a>
+  <a
+    href="/support"
+    class="flex flex-col items-center gap-1 text-gray-400 hover:text-red-700 transition-colors"
+  >
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
+      />
+    </svg>
+    <span class="text-[9px] font-bold uppercase tracking-widest">Help</span>
+  </a>
+  <% } %>
+</div>
+
+<div
   id="toast-container"
-  class="fixed top-24 left-1/2 -translate-x-1/2 z-[999] flex flex-col gap-3 w-full max-w-sm px-4"
+  class="fixed top-20 md:top-24 left-1/2 -translate-x-1/2 z-[999] flex flex-col gap-3 w-[90%] max-w-sm"
 ></div>
 
 <script>
@@ -162,7 +291,7 @@
     const toast = document.createElement("div");
     const isSuccess = type === "success";
 
-    toast.className = `flex items-center gap-3 p-4 rounded-2xl shadow-2xl border backdrop-blur-md transform transition-all duration-500 translate-y-[-20px] opacity-0 
+    toast.className = `flex items-center gap-3 p-4 rounded-xl shadow-2xl border backdrop-blur-md transform transition-all duration-500 translate-y-[-20px] opacity-0 
       ${
         isSuccess
           ? "bg-white/90 border-emerald-100 text-emerald-900"

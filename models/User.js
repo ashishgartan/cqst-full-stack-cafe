@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
     avatar: {
       type: String,
       default: "default-avatar.png",
@@ -34,6 +38,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+    pushSubscription: {
+      type: Object,
+      default: null,
     },
   },
   { timestamps: true }

@@ -10,7 +10,6 @@ module.exports = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded; // Attach to request for controllers
-    console.log("current user: ", decoded);
     res.locals.user = decoded; // Attach to locals for EJS templates
   } catch (err) {
     console.error("Global Auth Error:", err.message);

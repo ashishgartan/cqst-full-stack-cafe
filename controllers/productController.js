@@ -1,21 +1,30 @@
 const Product = require("../models/Product");
 
-// Render the main page
+// 1. Serves the EJS Page Shell
 exports.getProductsPage = (req, res) => {
-  console.log("user in controller:", req.user);
-  res.render("products", {user: req.user||null});
+  // Keeps your user context for the header
+  res.render("products", { user: req.user || null });
 };
 
-// API for filtering and pagination
+// 2. Serves the actual data (Search, Filter, Pagination)
 exports.getApiProducts = async (req, res) => {
   try {
     const { category, search } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 8;
 
-    let query = {};
+    let query = { isActive: true };
+
+    // Feature: Category Filtering
     if (category && category !== "all") query.category = category;
-    if (search) query.name = { $regex: search, $options: "i" };
+
+    // Feature: Search (Name or Description)
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
 
     const totalProducts = await Product.countDocuments(query);
     const products = await Product.find(query)
@@ -28,34 +37,6 @@ exports.getApiProducts = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-exports.searchProducts = async (req, res) => {
-  try {
-    const query = req.query.q; // Get the search term from the URL
-
-    if (!query) {
-      return res.redirect("/products");
-    }
-
-    // Use $or to search across multiple fields
-    // 'i' makes it case-insensitive
-    const products = await Product.find({
-      $or: [
-        { name: { $regex: query, $options: "i" } },
-        { category: { $regex: query, $options: "i" } },
-        { description: { $regex: query, $options: "i" } },
-      ],
-    });
-
-    res.render("products", {
-      products,
-      searchQuery: query,
-      user: req.user,
-    });
-  } catch (err) {
-    console.error("Search Error:", err);
-    res.status(500).send("Error performing search");
+    res.status(500).json({ success: false, message: err.message });
   }
 };

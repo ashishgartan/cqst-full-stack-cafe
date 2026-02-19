@@ -10,6 +10,7 @@ const products = [
     category: "Fast Food",
     description: "Juicy beef patty with melted cheddar and secret sauce.",
     image: "burger.png",
+    isActive: true,
   },
   {
     name: "Crispy Chicken Wrap",
@@ -17,62 +18,79 @@ const products = [
     category: "Fast Food",
     description: "Grilled chicken with fresh veggies in a warm tortilla.",
     image: "chicken-wrap.png",
+    isActive: true,
   },
   {
     name: "Peri Peri Fries",
     price: 80,
     category: "Fast Food",
     description: "Golden fries tossed in spicy peri-peri seasoning.",
-    image: "fries.png",
+    image: "peri-peri-fries.png",
+    isActive: true,
   },
   {
     name: "Veggie Pizza Slice",
     price: 99,
     category: "Fast Food",
     description: "Hand-tossed crust with bell peppers and mozzarella.",
-    image: "pizza.png",
+    image: "loaded-veggie-pizza.png",
+    isActive: true,
   },
   {
     name: "Iced Caramel Latte",
     price: 160,
     category: "Drinks",
     description: "Espresso with cold milk and sweet caramel drizzle.",
-    image: "caramel-latte.png",
+    image: "iced-caramel-latte.png",
+    isActive: true,
   },
   {
     name: "Classic Cold Coffee",
     price: 120,
     category: "Drinks",
     description: "Creamy blended coffee with a dash of chocolate.",
-    image: "cold-coffee.png",
+    image: "classic-cold-coffee.png",
+    isActive: true,
   },
   {
     name: "Fresh Lime Soda",
     price: 50,
     category: "Drinks",
     description: "Refreshing lemon drink with salt or sugar.",
-    image: "lime-soda.png",
+    image: "fresh-lime-soda.png",
+    isActive: true,
   },
   {
     name: "Chocolate Lava Cake",
     price: 110,
     category: "Desserts",
     description: "Warm cake with a gooey molten chocolate center.",
-    image: "lava-cake.png",
+    image: "chocolate-lava-cake.png",
+    isActive: true,
   },
   {
     name: "Blueberry Cheesecake",
     price: 190,
     category: "Desserts",
     description: "Velvety cheesecake topped with blueberry compote.",
-    image: "cheesecake.png",
+    image: "blueberry-cheesecake.png",
+    isActive: true,
   },
   {
     name: "Red Velvet Pastry",
     price: 120,
     category: "Desserts",
     description: "Soft sponge cake with cream cheese frosting.",
-    image: "red-velvet.png",
+    image: "red-velvet-pastry.png",
+    isActive: true,
+  },
+  {
+    name: "Garden Salad",
+    price: 140,
+    category: "Fast Food",
+    description: "Fresh greens and seasonal vegetables.",
+    image: "garden-salad.png",
+    isActive: true,
   },
 ];
 
@@ -86,7 +104,7 @@ const seedDatabase = async () => {
 
     // Insert the new products
     await Product.insertMany(products);
-    console.log("✅ 10 Products seeded successfully");
+    console.log("✅ Products seeded successfully with exact image names");
 
     // Close connection
     mongoose.connection.close();

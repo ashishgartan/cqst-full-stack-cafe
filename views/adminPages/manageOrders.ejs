@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/icons/favicon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#b91c1c" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Live Monitor | FullStack Café</title>
+    <style>
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-slideIn {
+        animation: slideIn 0.3s ease forwards;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 min-h-screen font-sans">
+    <%- include('../partials/header') %>
+
+    <div class="p-4 md:p-8">
+      <div class="max-w-7xl mx-auto">
+        <div
+          class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8"
+        >
+          <div>
+            <h1 class="text-3xl font-black text-gray-800 tracking-tight">
+              Live Order Monitor
+            </h1>
+            <p class="text-gray-500 font-medium flex items-center gap-2">
+              <span
+                class="w-2 h-2 bg-green-500 rounded-full animate-pulse"
+              ></span>
+              Kitchen Connection Active
+            </p>
+          </div>
+        </div>
+
+        <div
+          class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+        >
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead
+                class="bg-gray-50 uppercase text-[10px] font-black text-gray-400 tracking-widest border-b border-gray-100"
+              >
+                <tr>
+                  <th class="p-6">Customer & Reason</th>
+                  <th class="p-6">Order Details</th>
+                  <th class="p-6">Total</th>
+                  <th class="p-6 text-center">Status Action</th>
+                </tr>
+              </thead>
+              <tbody id="orders-tbody" class="divide-y divide-gray-50"></tbody>
+            </table>
+          </div>
+
+          <div
+            id="pagination-footer"
+            class="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4"
+          >
+            <p
+              id="pagination-info"
+              class="text-xs font-black text-gray-400 uppercase tracking-widest"
+            ></p>
+            <div id="pagination-controls" class="flex gap-2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-cancel-modal" class="fixed inset-0 z-[150] hidden">
+      <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"></div>
+      <div class="relative flex items-center justify-center min-h-screen p-4">
+        <div
+          class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-slideIn"
+        >
+          <div class="p-8">
+            <div
+              class="bg-red-50 w-12 h-12 rounded-xl flex items-center justify-center mb-6"
+            >
+              <svg
+                class="w-6 h-6 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2.5"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-black text-gray-900 tracking-tight mb-2">
+              Void Order
+            </h3>
+            <p class="text-gray-500 font-medium mb-6">
+              Why are you cancelling this order?
+            </p>
+
+            <div class="space-y-2 mb-6">
+              <button
+                onclick="selectReason('Item Out of Stock')"
+                class="w-full text-left px-5 py-3 rounded-xl border border-gray-100 font-bold text-gray-600 hover:border-red-500 hover:bg-red-50 transition-all text-sm"
+              >
+                🚫 Item Out of Stock
+              </button>
+              <button
+                onclick="selectReason('Kitchen Overloaded')"
+                class="w-full text-left px-5 py-3 rounded-xl border border-gray-100 font-bold text-gray-600 hover:border-red-500 hover:bg-red-50 transition-all text-sm"
+              >
+                👨‍🍳 Kitchen Overloaded
+              </button>
+              <textarea
+                id="admin-manual-reason"
+                placeholder="Other specific reason..."
+                class="w-full p-4 mt-2 rounded-xl border border-gray-100 font-medium text-sm focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                rows="2"
+              ></textarea>
+            </div>
+
+            <div class="flex gap-3">
+              <button
+                onclick="closeAdminModal()"
+                class="flex-1 py-4 font-black text-[10px] uppercase tracking-widest text-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onclick="confirmAdminCancel()"
+                class="flex-1 py-4 bg-gray-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all"
+              >
+                Confirm Void
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let state = { page: 1, limit: 10, pendingCancelId: null };
+
+      async function loadOrders() {
+        try {
+          const res = await fetch(
+            `/api/admin/orders?page=${state.page}&limit=${state.limit}`
+          );
+          const data = await res.json();
+          renderTable(data.orders);
+          renderPagination(data.totalPages, data.currentPage);
+        } catch (err) {
+          document.getElementById(
+            "orders-tbody"
+          ).innerHTML = `<tr><td colspan="4" class="p-20 text-center text-red-500 font-bold">Connection lost. Retrying...</td></tr>`;
+        }
+      }
+
+      function renderTable(orders) {
+        const tbody = document.getElementById("orders-tbody");
+        if (!orders.length) {
+          tbody.innerHTML = `<tr><td colspan="4" class="p-20 text-center font-bold text-gray-400 underline decoration-gray-200">No active orders found.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = orders
+          .map((order) => {
+            const isCancelled = order.status === "Cancelled";
+            const isDelivered = order.status === "Delivered";
+
+            let selectClass = "bg-gray-50 border-gray-100 text-gray-600";
+            if (isCancelled)
+              selectClass =
+                "bg-red-50 border-red-200 text-red-400 cursor-not-allowed";
+            if (isDelivered)
+              selectClass = "bg-green-50 border-green-200 text-green-600";
+
+            return `
+                    <tr class="hover:bg-gray-50/50 transition-colors ${
+                      isCancelled ? "opacity-60 bg-red-50/20" : ""
+                    }">
+                        <td class="p-6">
+                            <p class="font-bold text-gray-800">${
+                              order.user?.username || "Guest"
+                            }</p>
+                            <p class="text-xs text-gray-400 font-medium">${
+                              order.user?.phone || "No phone"
+                            }</p>
+                            <p class="text-[9px] text-gray-300 font-black uppercase mt-1">ID: ${order._id.slice(
+                              -6
+                            )}</p>
+                            ${
+                              isCancelled && order.reasonForCancellation
+                                ? `
+                                <p class="mt-2 text-[10px] bg-white text-red-600 p-2 rounded-xl font-black border border-red-100">
+                                    REASON: ${order.reasonForCancellation}
+                                </p>
+                            `
+                                : ""
+                            }
+                        </td>
+                        <td class="p-6 space-y-1">
+                            ${order.items
+                              .map(
+                                (i) => `
+                                <div class="text-xs font-bold text-gray-600 flex items-center">
+                                    <span class="bg-gray-100 text-gray-400 w-5 h-5 flex items-center justify-center rounded mr-2 text-[9px]">${
+                                      i.quantity
+                                    }x</span>
+                                    ${i.productId?.name || "Deleted Item"}
+                                </div>
+                            `
+                              )
+                              .join("")}
+                        </td>
+                        <td class="p-6 font-black text-red-700 text-lg">₹${
+                          order.totalAmount
+                        }</td>
+                        <td class="p-6 text-center">
+                            <div class="relative inline-block w-full max-w-[150px]">
+                                <select 
+                                    onchange="handleStatusChange('${
+                                      order._id
+                                    }', this.value)" 
+                                    ${isCancelled ? "disabled" : ""} 
+                                    class="${selectClass} w-full rounded-xl p-3 text-[10px] font-black uppercase tracking-widest border focus:ring-2 focus:ring-red-500 appearance-none"
+                                >
+                                    ${[
+                                      "Pending",
+                                      "Preparing",
+                                      "Ready",
+                                      "Delivered",
+                                      "Cancelled",
+                                    ]
+                                      .map(
+                                        (s) => `
+                                        <option value="${s}" ${
+                                          order.status === s ? "selected" : ""
+                                        }>
+                                            ${
+                                              s === "Cancelled"
+                                                ? "Cancelled"
+                                                : s
+                                            }
+                                        </option>
+                                    `
+                                      )
+                                      .join("")}
+                                </select>
+                                ${
+                                  !isCancelled
+                                    ? `<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="4"/></svg>
+                                </div>`
+                                    : ""
+                                }
+                            </div>
+                        </td>
+                    </tr>`;
+          })
+          .join("");
+      }
+
+      // --- Logic Handlers ---
+      async function handleStatusChange(orderId, status) {
+        if (status === "Cancelled") {
+          state.pendingCancelId = orderId;
+          document.getElementById("admin-manual-reason").value = "";
+          document
+            .getElementById("admin-cancel-modal")
+            .classList.remove("hidden");
+        } else {
+          updateStatus(orderId, status);
+        }
+      }
+
+      function closeAdminModal() {
+        document.getElementById("admin-cancel-modal").classList.add("hidden");
+        state.pendingCancelId = null;
+        loadOrders(); // Reset UI
+      }
+
+      function selectReason(reason) {
+        document.getElementById("admin-manual-reason").value = reason;
+      }
+
+      async function confirmAdminCancel() {
+        const reason = document
+          .getElementById("admin-manual-reason")
+          .value.trim();
+        if (!reason) return alert("Please specify a reason.");
+
+        await updateStatus(state.pendingCancelId, "Cancelled", reason);
+        document.getElementById("admin-cancel-modal").classList.add("hidden");
+      }
+
+      async function updateStatus(orderId, status, reason = "") {
+        try {
+          const res = await fetch("/api/admin/orders/update-status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId, status, reason }),
+          });
+          if (res.ok) {
+            showToast(
+              `Order marked as ${status}`,
+              status === "Cancelled" ? "error" : "success"
+            );
+            loadOrders();
+          }
+        } catch (err) {
+          showToast("Error updating status", "error");
+        }
+      }
+
+      function renderPagination(total, current) {
+        const controls = document.getElementById("pagination-controls");
+        document.getElementById(
+          "pagination-info"
+        ).innerText = `Page ${current} of ${total}`;
+        controls.innerHTML = "";
+        if (total <= 1) return;
+        for (let i = 1; i <= total; i++) {
+          controls.innerHTML += `<button onclick="changePage(${i})" class="w-9 h-9 rounded-xl font-black text-[10px] ${
+            i === current
+              ? "bg-gray-900 text-white"
+              : "bg-white border border-gray-100 text-gray-400"
+          }">${i}</button>`;
+        }
+      }
+
+      function changePage(p) {
+        state.page = p;
+        loadOrders();
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        loadOrders();
+        setInterval(loadOrders, 30000); // 30s auto-refresh
+      });
+    </script>
+    <%- include('../partials/footer') %>
+  </body>
+</html>

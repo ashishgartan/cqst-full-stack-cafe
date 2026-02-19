@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const orderController = require("../controllers/orderController");
-const isAuth = require("../middlewares/auth");
+const isAuthenticated = require("../middlewares/isAuthenticated");
 
-// POST request to place an order
-router.post("/api/orders", isAuth, orderController.createOrder);
-
-// GET request to see order history
-router.get("/orders", isAuth, orderController.getUserOrders);
+// The API endpoint your fetch calls
+router.post("/api/orders", isAuthenticated, orderController.createOrder);
+router.post("/api/orders/cancel/:id", orderController.userCancelOrder);
+// The history pages we did earlier
+router.get("/orders", orderController.getOrderHistoryPage);
+router.get("/api/orders", orderController.getApiOrders);
 
 module.exports = router;
